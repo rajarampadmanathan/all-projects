@@ -1,0 +1,17 @@
+# Port for running eureka server
+server:
+  port: 1111   # HTTP (Tomcat) port
+  
+# Configure this Discovery Server
+eureka:
+  instance:
+    hostname: localhost
+    #You\u2019ll notice the register-with-eureka and fetch-registry settings are 
+    #both set to false.  This tells Eureka to work in standalone mode and 
+    #not try to connect to peer Eureka servers and fail if there are none.
+  client:  # Not a client, don't register with yourself
+    registerWithEureka: false
+    fetchRegistry: false
+    serviceUrl:
+    # Below url would be generated automatically from properties in this same file
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/

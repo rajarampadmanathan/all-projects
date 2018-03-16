@@ -1,0 +1,17 @@
+# Defines the port where the config server is running so that rest of the services can pick up 
+# their external configurations
+server:
+  port: 1112
+  
+spring:
+  cloud:
+    config:
+      server:
+        native:
+          searchLocations: classpath:/config_repository
+        #git:   
+          #uri: file:/Users/ajay/config_repository
+          #uri: https://github.com/anilallewar/sample-config
+# While in development mode, i have configured the config server to pick up configuration files from
+# the file system. For prduction you can use gitbug for fetching the configs.
+

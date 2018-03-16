@@ -1,0 +1,41 @@
+# usermanagement-service.yml
+configuration:  
+  projectName: taskmanagement-service
+server:
+#Port at which usermanagement-service is running
+  port: 8280
+
+#properties used by microserice in code
+
+message:
+  greeting: Hello from taskmanagement service
+
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 1
+    leaseExpirationDurationInSeconds: 2
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:1111/eureka/
+    healthcheck:
+      enabled: true
+    lease:
+      duration: 5
+      
+spring:
+  zipkin:
+    baseUrl: http://192.168.99.100:9411/
+  sleuth:
+    sampler:
+      percentage: 1.0
+# If you want to make it static then enabled=false and define list of servers.
+comments-service:
+  ribbon:
+    eureka:
+      enabled: true
+    #listOfServers: localhost:8380
+    #ServerListRefreshInterval: 15000
+conductor-server:
+  ribbon:
+    eureka:
+      enabled: true

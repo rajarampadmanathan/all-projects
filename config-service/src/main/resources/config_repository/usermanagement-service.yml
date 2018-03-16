@@ -1,0 +1,63 @@
+# usermanagement-service.yml
+configuration:  
+  projectName: usermanagement-service
+server:
+#Port at which usermanagement-service is running
+  port: 8180
+
+#properties used by microserice in code
+mail:
+  domain: yahoo.com
+
+message:
+  greeting: Hello from usermanagement service
+
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 1
+    leaseExpirationDurationInSeconds: 2
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:1111/eureka/
+    healthcheck:
+      enabled: true
+    lease:
+      duration: 5
+
+##### OAuth:start #####
+
+# The OAuth2 server definition that would be used to send the authorization requests to
+authserver:
+    hostname: localhost
+    port: 8880
+    contextPath: userauth
+
+# Note that the "/user" endpoint needs to provide the principle of the logged in user (/me endpoint)
+security:
+  oauth2:
+  #### This tells the service that it can use the token to access a "/me" endpoint and use that to drive authentication information
+    resource:
+      userInfoUri: http://${authserver.hostname}:${authserver.port}/${authserver.contextPath}/me
+      preferTokenInfo: false 
+    #### This is required by OAuth2 ro determine where the authorization server is. 
+    #### This will be required when your application/service is accepting access_token or where service needs to call another OAuth2 protected service using 
+    #### using OAuth2 client configuration. Token pass to this service will be propagated to next service. Like Task service is forwarding token to Comment service.
+    #### Here is the direct call to this service with token, " curl -k -v -X GET -H 'Authorization: Bearer 007046fb-a779-4d70-b34d-252d441a93c5' -H 'Content-Type: application/json' http://localhost:8080/all"
+    #### When we are doing SSO in that case zuul will be doing the token handling so dont need this when this service is behind the zuul/proxy.
+    
+    #client:
+      #accessTokenUri: http://${authserver.hostname}:${authserver.port}/${authserver.contextPath}/oauth/token
+      #userAuthorizationUri: http://${authserver.hostname}:${authserver.port}/${authserver.contextPath}/oauth/authorize
+      #clientId: my-trusted-client
+      #clientSecret: helloworld
+
+##### OAuth:end ##### 
+
+
+##### Zipkin and Sleuth #####
+spring:
+  zipkin:
+    baseUrl: http://192.168.99.100:9411/
+  sleuth:
+    sampler:
+      percentage: 1.0

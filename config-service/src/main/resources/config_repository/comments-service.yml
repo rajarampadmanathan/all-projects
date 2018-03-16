@@ -1,0 +1,52 @@
+# usermanagement-service.yml
+configuration:  
+  projectName: comments-service
+server:
+#Port at which comments-service is running
+  port: 8380
+
+#properties used by microserice in code
+
+message:
+  greeting: Hello from comments service
+
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 1
+    leaseExpirationDurationInSeconds: 2
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:1111/eureka/
+    healthcheck:
+      enabled: true
+    lease:
+      duration: 5
+
+
+##### OAuth:start #####
+
+# The OAuth2 server definition that would be used to send the authorization requests to
+authserver:
+    hostname: localhost
+    port: 8880
+    contextPath: userauth
+
+# Note that the "/user" endpoint needs to provide the principle of the logged in user (/me endpoint)
+security:
+  oauth2:
+    resource: 
+      userInfoUri: http://${authserver.hostname}:${authserver.port}/${authserver.contextPath}/me
+      preferTokenInfo: false 
+
+##### OAuth:end ##### 
+
+
+
+
+#### Zipkin and Sleuth ######
+spring:
+  zipkin:
+    baseUrl: http://192.168.99.100:9411/
+  sleuth:
+    sampler:
+      percentage: 1.0

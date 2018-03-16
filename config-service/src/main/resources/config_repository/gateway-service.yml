@@ -1,0 +1,153 @@
+# springcloud-resttemplateclient.yml
+configuration:  
+  projectName: gateway-service
+server:
+#Port at which usermanagement-service is running
+  port: 1113
+
+#properties used by microserice in code
+
+message:
+  greeting: Hello from zuul gateway service one more time
+
+
+#### The OAuth2 server definition that would be used to send the authorization requests to
+authserver:
+    hostname: localhost
+    port: 8880
+    contextPath: userauth
+
+#### Eureka:start ######
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 1
+    leaseExpirationDurationInSeconds: 2
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:1111/eureka/
+    healthcheck:
+      enabled: true
+    lease:
+      duration: 5
+    fetchRegistry: true
+      
+
+ribbon:
+  eureka:
+    enabled: true
+##### Eureka:end ######
+
+
+
+
+##### OAuth SSO: start #####
+
+# Define settings for Single-Sign-On with OAuth2; this means that we need to relay the OAuth token 
+# to the subsequent resources that are proxied by the Zuul api gateway.
+
+# The home definition below tells us to allow anonymous access (secure: false) to the static resources that
+# are accessed through the Zuul proxy. Means if user is accessing the static resource via zuul so no authentication for that.
+
+# Remaining properties are used by the OAuth2 SSO to determine where the authorization server is and
+# what client crendentials to use to access that server. You can do it via @EnableOAuth2Sso also in code.
+security:
+  oauth2:
+    sso:
+      home:
+        secure: false
+        path: /,/**/*.html
+    client:
+      accessTokenUri: http://${authserver.hostname}:${authserver.port}/${authserver.contextPath}/oauth/token
+      userAuthorizationUri: http://${authserver.hostname}:${authserver.port}/${authserver.contextPath}/oauth/authorize
+      clientId: my-trusted-client
+      clientSecret: helloworld
+# The userInfoUri is used to authenticate the user so that SSO token can be relayed forward. It needs to either be
+# a physical endpoint (defined using userInfoUri) OR can be bypassed if you use a JSON web token (JWT) that stores
+# information about grants and authentication in the token itself.
+
+# Note that the "/user" endpoint needs to provide the principle of the logged in user (/me endpoint)
+    resource: 
+      userInfoUri: http://${authserver.hostname}:${authserver.port}/${authserver.contextPath}/me
+      preferTokenInfo: false
+# The userInfoUri is used to authenticate the user so that SSO token can be relayed forward. It needs to either be
+# a physical endpoint (defined using userInfoUri) OR can be bypassed if you use a JSON web token (JWT) that stores
+# information about grants and authentication in the token itself.
+
+# Note that the "/user" endpoint needs to provide the principle of the logged in user (/me endpoint)
+#### This tells the service that it can use the token to access a "/me" endpoint and use that to drive authentication information
+    
+    
+# Datasource and JPA configuration to be used for using the same tokenstore as the authorization server for
+# the defined resource server. Note that there can't be 2 different root nodes, so datasource falls under the "spring" node.
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/authDB
+    username: root
+    password: root
+    driver-class: com.mysql.jdbc.Driver
+  
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: false
+    hibernate:
+      ddl-auto: create
+
+
+##### OAuth SSO: end #####
+
+
+################
+#For spring sleuth and zipkin
+  zipkin:
+    baseUrl: http://192.168.99.100:9411/
+  sleuth:
+    sampler:
+      percentage: 0.9
+#This is must otherwise need to do define sampling by code
+sample:
+  zipkin:
+    enabled: true
+
+
+##### Zuul:start #####
+# I have not exposed comments service via zuul. 
+## We can either use serviceId or Url for referring the actual service
+zuul: 
+  routes:       
+    users:  
+      path: /apis/users/**
+      #Here serviceID means application name defined in service config
+      serviceId: usermanagement-service
+      strip-prefix: false
+    tasks:  
+      path: /apis/tasks/**
+      #Here serviceID means application name defined in service config
+      serviceId: taskmanagement-service
+      strip-prefix: false
+    comments:  
+      path: /comments/**
+      #Here serviceID means application name defined in service config
+      serviceId: comments-service
+      strip-prefix: false
+    user:
+      path: /apis/loggedinuser/**
+      stripPrefix: true
+      url: http://${authserver.hostname}:${authserver.port}/${authserver.contextPath}
+    conductor-server:
+      path: /api/**
+      serviceId: conductor-server
+      #url: http://localhost:8080
+      stripPrefix: false
+
+
+#conductor-server:
+  #ribbon:
+    #listOfServers: localhost:8080
+    
+##### Zuul:end #######
+
+
+
+
+
+
